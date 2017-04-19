@@ -5,12 +5,15 @@
   "author": "Filipe",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_ENV=development webpack-dev-server --open --hot",
+    "dev": "cross-env NODE_ENV=development webpack-dev-server --open --port 3000 --hot --host 0.0.0.0",
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules"
   },
   "dependencies": {
     "bootstrap-vue": "^0.10.1",
+    "coinbase": "^2.0.6",
+    "tunnel-agent": "^0.6.0",
     "vue": "^2.2.1",
+    "vue-router": "^2.1.1",
     "vue-resource": "^1.2.1"
   },
   "devDependencies": {

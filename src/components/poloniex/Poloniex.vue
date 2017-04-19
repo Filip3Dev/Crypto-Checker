@@ -1,56 +1,101 @@
 <template>
   <div>
-
     <h1 class="centralizado">{{ titulo }}</h1>
     <h4>Livro de Ordens</h4>
-    <select class="select form-control" v-model="selected">
+    <select class="select form-control" v-model="selected"  @change="loadPrice(), takeVol()">
       <option disabled value="">Please select one</option>
-      <option v-for="s in lista" :value="s.sigla">
+      <option v-for="s in lista" :value="s.sigla" :style="{ 'background-image': 'url(' + s.img + ')' }">
         {{ s.nome }}
-        <img :src=" s.img " alt="">
       </option>
     </select>
-    <!-- <h5> {{selected}}</h5> -->
-    <a href="#" class="btn btn btn-primary" @click="loadPrice()">Show</a>
     <div class="container">
-    <div class="row">
-    <div class="col-md-6">
-      <h4 class="text-center">Venda</h4>
-      <li v-for="(s, index) in orderbook.asks">
-        <p>{{ s[0] }}</p><p>{{ s[1] }}</p> <p>{{ s[0] * s[1] }}</p>
-      </li>
-    </div>
-    <div class="col-md-6">
-      <h4 class="text-center">Compra</h4>
-      <li v-for="(s, index) in orderbook.bids">
-        <p>{{ s[0] }}</p><p>{{ s[1] }}</p> <p>{{ s[0] * s[1] }}</p>
-      </li>
-    </div>
-    </div>
+      <div class="row">
+        <div class="col-md-4">
+          <h4 class="text-center">Venda</h4>
+
+          <div class="box-price">
+            <li v-for="s in orderbook.asks">
+              <p>{{ s[0] }}</p>
+              <p>{{ s[1] }}</p>
+              <p v-if="Number(s[0] * s[1]).toFixed(8) >= 15" class="red">
+                {{ Number(s[0] * s[1]).toFixed(8)}}
+              </p>
+              <p v-else>
+                {{ Number(s[0] * s[1]).toFixed(8)}}
+              </p>
+            </li>
+          </div>
+
+        </div>
+        <div class="col-md-4">
+          <h4 class="text-center">Compra</h4>
+          <div class="box-price">
+
+            <li v-for="s in orderbook.bids">
+              <p>{{ s[0] }}</p>
+              <p>{{ s[1] }}</p>
+              <p v-if="Number(s[0] * s[1]).toFixed(8) >= 15" class="red">
+                {{ Number(s[0] * s[1]).toFixed(8)}}
+              </p>
+              <p v-else>
+                {{ Number(s[0] * s[1]).toFixed(8)}}
+              </p>
+            </li>
+
+          </div>
+        </div>
+        <div class="col-md-4">
+          <h4 class="text-center">Detalhes</h4>
+          <div class="box-price">
+            <h5 v-if="selected">Volume em Bitcoin: {{ volume[selected].BTC }}</h5>
+            <h5 v-if="selected">Volume em {{reversedMessage}}: {{ volume[selected][reversedMessage] }}</h5>
+
+          </div>
+        </div>
+
+        <div class="col-md-12">
+          <h4 class="text-center">Detalhes</h4>
+          <div class="box-price">
+            <demo-grid
+              :data="valor"
+              :columns="gridColumns">
+            </demo-grid>
+
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-
+  import Grid from '../shared/grid/Grid.vue'
 export default {
 
   components: {
-
+    'demo-grid': Grid
   },
   methods: {
     loadPrice: function() {
-      var x = "https://poloniex.com/public?command=returnOrderBook&currencyPair="
-      var y = "&depth=200"
-      this.$http.get(x + this.selected + y)
+      var ord = "https://poloniex.com/public?command=returnOrderBook&currencyPair="
+      var book = "&depth=500"
+      this.$http.get(ord + this.selected + book)
       .then(res => res.json())
       .then(orderbook => this.orderbook = orderbook, err => console.log(err));
+    },
+    takeVol: function() {
+      var  vol = "https://poloniex.com/public?command=return24hVolume"
+      this.$http.get(vol)
+      .then(res => res.json())
+      .then(volume => this.volume = volume, err => console.log(err));
     }
   },
 
   data () {
     return {
       titulo: 'Poloniex',
+      gridColumns: ['id','last','lowestAsk','highestBid','percentChange','baseVolume','quoteVolume','high24hr'],
       selected: '',
       orderbook: [],
       lista: [
@@ -82,16 +127,17 @@ export default {
 
       ],
       valor: [],
-
-      filtro: '',
-      interval: ''
+      interval: '',
+      volume: []
     }
   },
 
   computed: {
+    reversedMessage: function (selected) {
+      return this.selected.slice('4')
+    },
 
-  },
-
+},
   created() {
     this.$http.get('https://poloniex.com/public?command=returnTicker')
     .then(res => res.json())
@@ -99,7 +145,7 @@ export default {
   }
 }
 </script>
-<style >
+<style scoped>
 .select{
   width: 10em;
   height: 2em;
@@ -113,7 +159,7 @@ export default {
   margin: 2px;
   cursor: pointer;
 }
-.col-md-6{
+.col-md-4{
   border: 1px black solid
 }
 li{
@@ -121,11 +167,19 @@ li{
   display: flex;
   justify-content: space-around;
 }
+.red{
+  background: red;
+}
 .icons{
   width: 1.2em;
 }
 .centralizado {
   text-align: center;
+}
+.box-price{
+  height: 55vh;
+  width: auto;
+  overflow-y: auto;
 }
 *{
   font-family: "Roboto", sans-serif;
